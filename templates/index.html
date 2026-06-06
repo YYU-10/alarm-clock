@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实验设备共享管理平台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --primary-dark: #3730a3;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-top: 2px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: rgba(255,255,255,0.15);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .nav-tab {
+            padding: 8px 18px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.8);
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover { background: rgba(255,255,255,0.15); color: white; }
+        .nav-tab.active { background: white; color: var(--primary); }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.blue { background: #ede9fe; color: var(--primary); }
+        .stat-icon.green { background: #d1fae5; color: var(--success); }
+        .stat-icon.yellow { background: #fef3c7; color: var(--warning); }
+        .stat-icon.red { background: #fee2e2; color: var(--danger); }
+
+        .stat-info h3 { font-size: 24px; font-weight: 700; }
+        .stat-info p { font-size: 13px; color: var(--gray-500); }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header h2 { font-size: 17px; font-weight: 600; }
+
+        .card-body { padding: 24px; }
+
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-outline {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+        .btn-outline:hover { background: var(--gray-100); }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+        .table-wrapper { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        th {
+            background: var(--gray-50);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover td { background: var(--gray-50); }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-gray { background: var(--gray-200); color: var(--gray-700); }
+
+        .stock-bar {
+            width: 100px;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        .stock-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.2s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 { font-size: 18px; font-weight: 600; }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--gray-100);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+        }
+
+        .modal-close:hover { background: var(--gray-200); }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--gray-700);
+        }
+
+        .form-group label .required { color: var(--danger); margin-left: 2px; }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        textarea.form-control { resize: vertical; min-height: 80px; }
+
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 14px 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+            max-width: 380px;
+        }
+
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--danger); }
+        .toast-info { background: var(--primary); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .device-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .device-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .device-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .device-card-header h3 { font-size: 16px; font-weight: 600; }
+
+        .device-card-type {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 4px;
+        }
+
+        .device-card-desc {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .device-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 14px;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .device-stock-info { font-size: 13px; color: var(--gray-700); }
+        .device-stock-info strong { color: var(--primary); }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--gray-500);
+        }
+
+        .empty-state svg { margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--gray-700); }
+        .empty-state p { font-size: 14px; }
+
+        .search-box {
+            position: relative;
+            max-width: 280px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 14px 8px 36px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-box::before {
+            content: "\1F50D";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; gap: 12px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .device-grid { grid-template-columns: 1fr; }
+            .nav-tabs { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <h1>实验设备共享管理平台</h1>
+                <div class="header-subtitle">Laboratory Equipment Sharing Management System</div>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-page="dashboard" onclick="switchPage('dashboard')">首页概览</button>
+                <button class="nav-tab" data-page="devices" onclick="switchPage('devices')">设备管理</button>
+                <button class="nav-tab" data-page="borrow" onclick="switchPage('borrow')">借用申请</button>
+                <button class="nav-tab" data-page="records" onclick="switchPage('records')">借用记录</button>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Dashboard Page -->
+        <div class="page active" id="page-dashboard">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">&#128300;</div>
+                    <div class="stat-info">
+                        <h3 id="stat-total-devices">0</h3>
+                        <p>设备种类</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">&#128230;</div>
+                    <div class="stat-info">
+                        <h3 id="stat-total-stock">0</h3>
+                        <p>总库存数量</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon yellow">&#128203;</div>
+                    <div class="stat-info">
+                        <h3 id="stat-active">0</h3>
+                        <p>进行中的借用</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">&#128202;</div>
+                    <div class="stat-info">
+                        <h3 id="stat-borrowed">0</h3>
+                        <p>当前借出设备</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>设备实时状态</h2>
+                    <button class="btn btn-outline btn-sm" onclick="loadDashboard()">刷新</button>
+                </div>
+                <div class="card-body">
+                    <div class="device-grid" id="dashboard-devices"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Devices Management Page -->
+        <div class="page" id="page-devices">
+            <div class="card">
+                <div class="card-header">
+                    <h2>设备列表</h2>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <div class="search-box">
+                            <input type="text" placeholder="搜索设备..." id="device-search" oninput="filterDevices()">
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddDeviceModal()">+ 新增设备</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>设备名称</th>
+                                    <th>设备类型</th>
+                                    <th>库存数量</th>
+                                    <th>当前状态</th>
+                                    <th>使用说明</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="devices-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Borrow Page -->
+        <div class="page" id="page-borrow">
+            <div class="card">
+                <div class="card-header">
+                    <h2>提交借用申请</h2>
+                </div>
+                <div class="card-body" style="max-width: 600px;">
+                    <form id="borrow-form" onsubmit="submitBorrow(event)">
+                        <div class="form-group">
+                            <label>选择设备<span class="required">*</span></label>
+                            <select class="form-control" id="borrow-device" required>
+                                <option value="">请选择要借用的设备</option>
+                            </select>
+                        </div>
+                        <div id="device-stock-hint" style="font-size:13px;color:var(--gray-500);margin:-12px 0 18px 0;display:none;"></div>
+                        <div class="form-group">
+                            <label>负责人<span class="required">*</span></label>
+                            <input type="text" class="form-control" id="borrow-person" placeholder="请输入借用负责人姓名" required>
+                        </div>
+                        <div class="form-group">
+                            <label>借用开始时间<span class="required">*</span></label>
+                            <input type="datetime-local" class="form-control" id="borrow-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label>借用结束时间<span class="required">*</span></label>
+                            <input type="datetime-local" class="form-control" id="borrow-end" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">提交借用申请</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Records Page -->
+        <div class="page" id="page-records">
+            <div class="card">
+                <div class="card-header">
+                    <h2>借用记录</h2>
+                    <div style="display:flex;gap:10px;">
+                        <select class="form-control" style="width:auto;padding:6px 12px;" id="record-filter" onchange="loadBorrowings()">
+                            <option value="all">全部记录</option>
+                            <option value="active">借用中</option>
+                            <option value="returned">已归还</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>设备名称</th>
+                                    <th>负责人</th>
+                                    <th>借用时间</th>
+                                    <th>归还时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Device Modal -->
+    <div class="modal-overlay" id="device-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="device-modal-title">新增设备</h3>
+                <button class="modal-close" onclick="closeDeviceModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="device-form">
+                    <input type="hidden" id="device-edit-id">
+                    <div class="form-group">
+                        <label>设备名称<span class="required">*</span></label>
+                        <input type="text" class="form-control" id="device-name" placeholder="例如：数字示波器" required>
+                    </div>
+                    <div class="form-group">
+                        <label>设备类型<span class="required">*</span></label>
+                        <input type="text" class="form-control" id="device-type" placeholder="例如：测量仪器" required>
+                    </div>
+                    <div class="form-group">
+                        <label>库存数量<span class="required">*</span></label>
+                        <input type="number" class="form-control" id="device-stock" min="1" placeholder="请输入库存数量" required>
+                    </div>
+                    <div class="form-group">
+                        <label>使用说明</label>
+                        <textarea class="form-control" id="device-desc" placeholder="请输入设备使用说明、注意事项等"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeDeviceModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveDevice()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        let allDevices = [];
+        let allBorrowings = [];
+
+        // Page switching
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+
+            if (page === 'dashboard') loadDashboard();
+            else if (page === 'devices') loadDevices();
+            else if (page === 'borrow') loadBorrowForm();
+            else if (page === 'records') loadBorrowings();
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        // API helpers
+        async function api(url, options = {}) {
+            if (options.body && typeof options.body === 'object') {
+                options.body = JSON.stringify(options.body);
+                options.headers = { 'Content-Type': 'application/json', ...options.headers };
+            }
+            const res = await fetch(url, options);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || '请求失败');
+            return data;
+        }
+
+        // Dashboard
+        async function loadDashboard() {
+            try {
+                const [devices, stats] = await Promise.all([
+                    api('/api/devices'),
+                    api('/api/stats')
+                ]);
+                allDevices = devices;
+
+                document.getElementById('stat-total-devices').textContent = stats.total_devices;
+                document.getElementById('stat-total-stock').textContent = stats.total_stock;
+                document.getElementById('stat-active').textContent = stats.active_borrowings;
+                document.getElementById('stat-borrowed').textContent = stats.total_borrowed;
+
+                const grid = document.getElementById('dashboard-devices');
+                if (devices.length === 0) {
+                    grid.innerHTML = '<div class="empty-state"><h3>暂无设备</h3><p>请前往设备管理页面添加设备</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = devices.map(d => {
+                    const pct = d.stock > 0 ? ((d.available / d.stock) * 100) : 0;
+                    let barColor = pct > 50 ? 'var(--success)' : pct > 20 ? 'var(--warning)' : 'var(--danger)';
+                    let statusBadge = d.available > 0
+                        ? `<span class="badge badge-success">可借</span>`
+                        : `<span class="badge badge-danger">已满</span>`;
+
+                    return `
+                        <div class="device-card">
+                            <div class="device-card-header">
+                                <div>
+                                    <h3>${escHtml(d.name)}</h3>
+                                    <div class="device-card-type">${escHtml(d.type)}</div>
+                                </div>
+                                ${statusBadge}
+                            </div>
+                            <div class="device-card-desc">${escHtml(d.description || '暂无使用说明')}</div>
+                            <div class="device-card-footer">
+                                <div class="device-stock-info">
+                                    剩余 <strong>${d.available}</strong> / ${d.stock} 台
+                                    <div class="stock-bar">
+                                        <div class="stock-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="gotoBorrow('${d.id}')" ${d.available <= 0 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>
+                                    借用
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        function gotoBorrow(deviceId) {
+            switchPage('borrow');
+            setTimeout(() => {
+                document.getElementById('borrow-device').value = deviceId;
+                updateStockHint();
+            }, 50);
+        }
+
+        // Devices Management
+        async function loadDevices() {
+            try {
+                allDevices = await api('/api/devices');
+                renderDevicesTable(allDevices);
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        function renderDevicesTable(devices) {
+            const tbody = document.getElementById('devices-table-body');
+            if (devices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-500)">暂无设备数据</td></tr>';
+                return;
+            }
+            tbody.innerHTML = devices.map(d => {
+                const pct = d.stock > 0 ? ((d.available / d.stock) * 100) : 0;
+                let barColor = pct > 50 ? 'var(--success)' : pct > 20 ? 'var(--warning)' : 'var(--danger)';
+                let statusBadge = d.available === d.stock
+                    ? '<span class="badge badge-success">空闲</span>'
+                    : d.available > 0
+                        ? '<span class="badge badge-warning">部分借出</span>'
+                        : '<span class="badge badge-danger">全部借出</span>';
+
+                return `<tr>
+                    <td><strong>${escHtml(d.name)}</strong></td>
+                    <td><span class="badge badge-gray">${escHtml(d.type)}</span></td>
+                    <td>
+                        ${d.available}/${d.stock}
+                        <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(d.description)}">${escHtml(d.description || '-')}</td>
+                    <td>
+                        <button class="btn btn-outline btn-sm" onclick="openEditDeviceModal('${d.id}')">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteDevice('${d.id}')">删除</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterDevices() {
+            const q = document.getElementById('device-search').value.toLowerCase();
+            const filtered = allDevices.filter(d =>
+                d.name.toLowerCase().includes(q) || d.type.toLowerCase().includes(q)
+            );
+            renderDevicesTable(filtered);
+        }
+
+        function openAddDeviceModal() {
+            document.getElementById('device-modal-title').textContent = '新增设备';
+            document.getElementById('device-edit-id').value = '';
+            document.getElementById('device-form').reset();
+            document.getElementById('device-modal').classList.add('show');
+        }
+
+        function openEditDeviceModal(id) {
+            const d = allDevices.find(x => x.id === id);
+            if (!d) return;
+            document.getElementById('device-modal-title').textContent = '编辑设备';
+            document.getElementById('device-edit-id').value = id;
+            document.getElementById('device-name').value = d.name;
+            document.getElementById('device-type').value = d.type;
+            document.getElementById('device-stock').value = d.stock;
+            document.getElementById('device-desc').value = d.description || '';
+            document.getElementById('device-modal').classList.add('show');
+        }
+
+        function closeDeviceModal() {
+            document.getElementById('device-modal').classList.remove('show');
+        }
+
+        async function saveDevice() {
+            const id = document.getElementById('device-edit-id').value;
+            const data = {
+                name: document.getElementById('device-name').value.trim(),
+                type: document.getElementById('device-type').value.trim(),
+                stock: parseInt(document.getElementById('device-stock').value),
+                description: document.getElementById('device-desc').value.trim(),
+            };
+
+            if (!data.name || !data.type || !data.stock) {
+                showToast('请填写完整信息', 'error');
+                return;
+            }
+
+            try {
+                if (id) {
+                    await api(`/api/devices/${id}`, { method: 'PUT', body: data });
+                    showToast('设备更新成功');
+                } else {
+                    await api('/api/devices', { method: 'POST', body: data });
+                    showToast('设备添加成功');
+                }
+                closeDeviceModal();
+                loadDevices();
+                loadDashboard();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function deleteDevice(id) {
+            if (!confirm('确定要删除该设备吗？')) return;
+            try {
+                await api(`/api/devices/${id}`, { method: 'DELETE' });
+                showToast('设备已删除');
+                loadDevices();
+                loadDashboard();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        // Borrow Form
+        async function loadBorrowForm() {
+            try {
+                allDevices = await api('/api/devices');
+                const select = document.getElementById('borrow-device');
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">请选择要借用的设备</option>' +
+                    allDevices.map(d => `<option value="${d.id}" ${d.available <= 0 ? 'disabled' : ''}>${d.name}（剩余${d.available}/${d.stock}）</option>`).join('');
+                if (currentVal) select.value = currentVal;
+
+                // Set default times
+                const now = new Date();
+                const start = document.getElementById('borrow-start');
+                const end = document.getElementById('borrow-end');
+                if (!start.value) {
+                    start.value = formatDatetimeLocal(now);
+                    const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    end.value = formatDatetimeLocal(endDate);
+                }
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        function updateStockHint() {
+            const select = document.getElementById('borrow-device');
+            const hint = document.getElementById('device-stock-hint');
+            const d = allDevices.find(x => x.id === select.value);
+            if (d) {
+                hint.style.display = 'block';
+                hint.innerHTML = `当前「${escHtml(d.name)}」剩余可借: <strong>${d.available}</strong> 台 / 共 ${d.stock} 台`;
+            } else {
+                hint.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'borrow-device') updateStockHint();
+        });
+
+        async function submitBorrow(e) {
+            e.preventDefault();
+            const data = {
+                device_id: document.getElementById('borrow-device').value,
+                borrower: document.getElementById('borrow-person').value.trim(),
+                start_time: document.getElementById('borrow-start').value,
+                end_time: document.getElementById('borrow-end').value,
+            };
+
+            if (!data.device_id || !data.borrower || !data.start_time || !data.end_time) {
+                showToast('请填写完整信息', 'error');
+                return;
+            }
+
+            try {
+                await api('/api/borrowings', { method: 'POST', body: data });
+                showToast('借用申请提交成功！');
+                document.getElementById('borrow-form').reset();
+                document.getElementById('device-stock-hint').style.display = 'none';
+                loadBorrowForm();
+                loadDashboard();
+                loadDevices();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        // Borrowing Records
+        async function loadBorrowings() {
+            try {
+                allBorrowings = await api('/api/borrowings');
+                const filter = document.getElementById('record-filter').value;
+                let filtered = allBorrowings;
+                if (filter === 'active') filtered = allBorrowings.filter(b => b.status === 'active');
+                else if (filter === 'returned') filtered = allBorrowings.filter(b => b.status === 'returned');
+
+                const tbody = document.getElementById('records-table-body');
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-500)">暂无借用记录</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = filtered.map(b => {
+                    const statusBadge = b.status === 'active'
+                        ? '<span class="badge badge-warning">借用中</span>'
+                        : '<span class="badge badge-success">已归还</span>';
+                    const returnBtn = b.status === 'active'
+                        ? `<button class="btn btn-success btn-sm" onclick="returnDevice('${b.id}')">归还</button>`
+                        : `<span style="color:var(--gray-500);font-size:13px">${formatTime(b.returned_at)}</span>`;
+
+                    return `<tr>
+                        <td><strong>${escHtml(b.device_name)}</strong></td>
+                        <td>${escHtml(b.borrower)}</td>
+                        <td>${formatTime(b.start_time)} ~ ${formatTime(b.end_time)}</td>
+                        <td>${b.status === 'returned' ? formatTime(b.returned_at) : '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td>${b.status === 'active' ? `<button class="btn btn-success btn-sm" onclick="returnDevice('${b.id}')">归还</button>` : '-'}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function returnDevice(borrowingId) {
+            if (!confirm('确认归还该设备？')) return;
+            try {
+                await api(`/api/borrowings/${borrowingId}/return`, { method: 'POST' });
+                showToast('设备已归还');
+                loadBorrowings();
+                loadDashboard();
+                loadDevices();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        // Utilities
+        function escHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatTime(isoStr) {
+            if (!isoStr) return '-';
+            const d = new Date(isoStr);
+            return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDatetimeLocal(date) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        // Init
+        loadDashboard();
+
+        // Auto-refresh dashboard every 30 seconds
+        setInterval(() => {
+            const activePage = document.querySelector('.page.active');
+            if (activePage && activePage.id === 'page-dashboard') {
+                loadDashboard();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
